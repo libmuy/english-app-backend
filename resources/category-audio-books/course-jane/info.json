@@ -1,0 +1,16 @@
+{
+    "desc": "简爱精简版，《简·爱》是夏洛特·勃朗特创作的一部经典小说，探讨了爱情、独立和道德等主题。故事讲述了孤儿简·爱的成长历程，她在追求个人成长和幸福的过程中，经历了许多挑战。本教程将带领你深入学习这部文学巨作，帮助你在提升英语语言技能的同时，深入理解这部历久弥新的作品。",
+    "name": "简爱精简版",
+    "episodes": [
+        {
+            "prefix": "01-the-red-room",
+            "audio_length": "11:41",
+            "name": "1. The Red Room"
+        },
+        {
+            "prefix": "02-leaving-gateshead",
+            "audio_length": "11:01",
+            "name": "2. Leaving Gateshead"
+        }
+    ]
+}
