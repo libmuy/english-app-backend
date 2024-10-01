@@ -2,11 +2,11 @@
 require 'db_config.php';
 require 'validation.php';
 
-$data = ENSURE_TOKEN_METHOD_ARGUMENT(['user_name'], false);
+$data = ensure_token_method_argument(['user_name'], false);
 
 $userName = $data['user_name'];
 
-if (!validateUserName($userName)) {
+if (!validate_user_name($userName)) {
     http_response_code(400);
     echo json_encode(array("error" => "Invalid user ID format"));
     exit;

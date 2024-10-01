@@ -7,7 +7,7 @@ require 'token.php';
 
 function checkUserExist($userName)
 {
-    [$stmt, $result] = execQuery(
+    [$stmt, $result] = exec_query(
         "SELECT * FROM user WHERE name = ?",
         "s",
         $userName
@@ -26,7 +26,7 @@ function insertUser($userName, $password, $email)
 {
     global $conn;
     $hashedPassword = hash('sha256', $password);
-    [$stmt, $affected_rows] = execQuery(
+    [$stmt, $affected_rows] = exec_query(
         "INSERT INTO user (name, password, email) VALUES (?, ?, ?)",
         "sss",
         $userName,
@@ -44,7 +44,7 @@ function insertUser($userName, $password, $email)
 
 function genResp($userName)
 {
-    [$stmt, $result] = execQuery(
+    [$stmt, $result] = exec_query(
         "SELECT * FROM user WHERE name = ?",
         "s",
         $userName
@@ -56,12 +56,12 @@ function genResp($userName)
     $stmt->close();
 }
 
-$data = ENSURE_TOKEN_METHOD_ARGUMENT(['user_name', 'password', 'email']);
+$data = ensure_token_method_argument(['user_name', 'password', 'email']);
 $userName = $data['user_name'];
 $password = $data['password'];
 $email = $data['email'];
 
-if (!validateUserName($userName) || !validatePassword($password) || !validateEmail($email)) {
+if (!validate_user_name($userName) || !validate_password($password) || !validate_email($email)) {
     http_response_code(400);
     echo json_encode(['error' => 'Invalid input data']);
     exit;

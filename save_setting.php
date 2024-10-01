@@ -1,70 +1,197 @@
 <?php
 require 'user/db_config.php';
 require 'user/token.php';
+require 'user/validation.php';
 
-// Enable error reporting for debugging
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
 
-try {
-    validateToken();
+// Define the allowed columns that can be updated
+$allowed_columns = [
+    'theme',
+    'theme_color',
+    'font_size',
+    'is_visible_text_cn',
+    'is_visible_text_en',
+    'is_visible_input',
+    'is_visible_select',
+    'is_auto_play_after_switch',
+    'is_auto_play_next',
+    'playback_times',
+    'playback_interval',
+    'playback_speed',
+    'default_favorite_list'
+];
 
-    $data = json_decode(file_get_contents('php://input'), true);
-    if (!isset($data['user_id']) || !isset($data['setting_key']) || !isset($data['setting_value'])) {
-        throw new Exception('Invalid input data');
-    }
+// Function to validate column names
+function validate_columns($input_keys, $allowed_columns) {
+    $invalid_keys = array_diff($input_keys, $allowed_columns);
+    return $invalid_keys;
+}
 
-    $userName = $data['user_id'];
-    $setting_key = $data['setting_key'];
-    $setting_value = $data['setting_value'];
+function exist_in_db($user_id) {
+    $check_query = "SELECT user_id FROM setting WHERE user_id = ?";
+    [$check_stmt, $check_result] = exec_query($check_query, "i", $user_id);
+    $ret = $check_result->num_rows > 0;
+    $check_stmt->close();
+    return $ret;
+}
 
-    // Check if $conn is properly initialized
-    if (!$conn) {
-        throw new Exception('Database connection failed: ' . $conn->connect_error);
-    }
+// Function to validate data types (you can expand this based on your requirements)
+function validate_data_types($data) {
+    $errors = [];
 
-    // Check if the setting already exists
-    $check_stmt = $conn->prepare("SELECT setting_value FROM setting WHERE user_id = ? AND setting_key = ?");
-    if (!$check_stmt) {
-        throw new Exception('Database prepare statement failed: ' . $conn->error);
-    }
-
-    $check_stmt->bind_param("ss", $userName, $setting_key);
-    $check_stmt->execute();
-    $check_stmt->store_result();
-
-    if ($check_stmt->num_rows > 0) {
-        $check_stmt->bind_result($existing_value);
-        $check_stmt->fetch();
-        if ($existing_value === $setting_value) {
-            throw new Exception('Failed to save setting: No rows affected because the data is identical.');
+    foreach ($data as $key => $value) {
+        switch ($key) {
+            case 'theme':
+                if (!in_array($value, ['light', 'dark', 'system'])) {
+                    $errors[] = "Invalid value for theme. Allowed values: light, dark, system.";
+                }
+                break;
+            case 'theme_color':
+                if (!preg_match('/^[0-9]+$/', $value)) {
+                    $errors[] = "Invalid format for theme_color. Expected integer value.";
+                }
+                break;
+            case 'font_size':
+                if (!is_int($value) || $value < 8 || $value > 72) { // Example constraints
+                    $errors[] = "font_size must be an integer between 8 and 72.";
+                }
+                break;
+            case 'is_visible_text_cn':
+            case 'is_visible_text_en':
+            case 'is_visible_input':
+            case 'is_visible_select':
+            case 'is_auto_play_after_switch':
+            case 'is_auto_play_next':
+                if (!is_int($value)) {
+                    $errors[] = "$key must be a integer.";
+                }
+                break;
+            case 'playback_times':
+            case 'playback_interval':
+                if (!is_int($value) || $value < 0) {
+                    $errors[] = "$key must be a non-negative integer.";
+                }
+                break;
+            case 'playback_speed':
+                if (!is_numeric($value) || $value < 0.1 || $value > 5.0) { // Example range
+                    $errors[] = "playback_speed must be a number between 0.1 and 5.0.";
+                }
+                break;
+            default:
+                // No validation for unspecified keys
+                break;
         }
     }
 
-    $check_stmt->close();
-
-    $stmt = $conn->prepare("INSERT INTO setting (user_id, setting_key, setting_value) VALUES (?, ?, ?)
-                            ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)");
-    if (!$stmt) {
-        throw new Exception('Database prepare statement failed: ' . $conn->error);
-    }
-
-    $stmt->bind_param("sss", $userName, $setting_key, $setting_value);
-    $stmt->execute();
-
-    if ($stmt->error) {
-        throw new Exception('Failed to save setting: ' . $stmt->error);
-    }
-
-    if ($stmt->affected_rows === 0) {
-        throw new Exception('Failed to save setting: No rows affected.');
-    }
-
-    $stmt->close();
-
-    echo json_encode(['message' => 'Setting saved successfully']);
-} catch (Exception $e) {
-    http_response_code(400); // Bad Request
-    echo json_encode(['error' => $e->getMessage()]);
+    return $errors;
 }
-?>
+
+// Set the response header to JSON
+header('Content-Type: application/json');
+// Ensure the request method is POST and required parameters are present
+$data = ensure_token_method_argument(['user_id']); // Assuming the function can handle JSON input
+// Extract the user_id
+$user_id = $data['user_id'];
+unset($data['user_id']);
+$add = $data['add'] ?? false;
+unset($data['add']);
+
+if (empty($data)) {
+    send_error_response(400, 'No input data provided.');
+}
+
+if ($add && exist_in_db($user_id)) {
+    send_error_response(400, 'data already exists in DB.');
+}
+
+
+// Validate that the input keys are allowed
+$input_keys = array_keys($data);
+$invalid_keys = validate_columns($input_keys, $allowed_columns);
+
+if (!empty($invalid_keys)) {
+    send_error_response(400, 'Invalid parameter(s): ' . implode(', ', $invalid_keys));
+}
+
+// Validate data types and constraints
+$data_type_errors = validate_data_types($data);
+if (!empty($data_type_errors)) {
+    send_error_response(400, $data_type_errors);
+}
+
+// Build the SET part of the SQL statement dynamically
+$set_clauses = [];
+$params = [];
+$types = '';
+
+foreach ($data as $key => $value) {
+    $set_clauses[] = "`$key` = ?";
+    $insert_clauses[] = "`$key`";
+    $insert_value_clauses[] = "?";
+    // Determine the type based on the column
+    switch ($key) {
+        case 'theme':
+            $types .= 's';
+            $params[] = $value;
+            break;
+        case 'font_size':
+        case 'playback_times':
+        case 'playback_interval':
+        case 'theme_color':
+        case 'default_favorite_list':
+        case 'is_visible_text_cn':
+        case 'is_visible_text_en':
+        case 'is_visible_input':
+        case 'is_visible_select':
+        case 'is_auto_play_after_switch':
+        case 'is_auto_play_next':
+            $types .= 'i';
+            $params[] = $value;
+            break;
+        case 'playback_speed':
+            $types .= 'd';
+            $params[] = $value;
+            break;
+        default:
+            break;
+    }
+}
+
+// If there are no fields to update, return an error
+if (empty($set_clauses)) {
+    send_error_response(400, 'No valid fields provided for update.');
+}
+// Append the user_id for the WHERE clause
+$types .= 'i'; // Assuming user_id is stored as SMALLINT UNSIGNED (integer)
+$params[] = $user_id;
+
+// insert a new record
+if ($add) {
+    $insert_clauses[] = 'user_id';
+    $insert_value_clauses[] = '?';
+    $insert_statement = implode(', ', $insert_clauses);
+    $values_statement = implode(', ', $insert_value_clauses);
+    $query = "INSERT INTO setting ($insert_statement) VALUES ($values_statement)";
+
+// update a existing record
+} else {
+    // Construct the final SQL query
+    $set_statement = implode(', ', $set_clauses);
+    $query = "UPDATE setting SET $set_statement WHERE user_id = ?";
+}
+
+
+// Execute the update query
+[$stmt, $result] = exec_query($query, $types, ...$params);
+$updated = $stmt->affected_rows > 0;
+// Close the statement
+$stmt->close();
+
+log_error("updated: $updated", "query: $query");
+
+// Check if the update was successful
+if (!$updated && !exist_in_db($user_id)) {
+    send_error_response(404, 'User settings not found.');
+}
+
+

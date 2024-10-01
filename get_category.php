@@ -4,33 +4,33 @@ require 'user/token.php';
 require 'user/validation.php';
 
 // category_id == NULL is acceptable.
-ENSURE_TOKEN_METHOD();
+ensure_token_method();
 
 $data = json_decode(file_get_contents('php://input'), true);
 $categoryId = $data['category_id'];
 
 if (is_null($categoryId)) {
     $name = "Root Category";
-    $desc = "";
+    $description = "";
     $condition = "IS NULL";
 
-    $query = "SELECT id, name, 'desc' FROM category_master WHERE parent_id IS NULL";
-    [$categoryStmt, $categoryResult] = execQuery($query);
-    $query = "SELECT id, name, 'desc', episode_count FROM course_master WHERE category_id IS NULL";
-    [$courseStmt, $courseResult] = execQuery($query);
+    $query = "SELECT id, name, description FROM category_master WHERE parent_id IS NULL";
+    [$categoryStmt, $categoryResult] = exec_query($query);
+    $query = "SELECT id, name, description, episode_count FROM course_master WHERE category_id IS NULL";
+    [$courseStmt, $courseResult] = exec_query($query);
 } else {
     $query = "SELECT * FROM category_master WHERE id = ?";
-    [$stmt, $result] = execQuery($query, "s", $categoryId);
+    [$stmt, $result] = exec_query($query, "s", $categoryId);
     $row = $result->fetch_assoc();
 
     $name = $row['name'];
-    $desc = $row['desc'];
+    $description = $row['description'];
     $stmt->close();
 
-    $query = "SELECT id, name, 'desc' FROM category_master WHERE parent_id = ?";
-    [$categoryStmt, $categoryResult] = execQuery($query, "i", $categoryId);
-    $query = "SELECT id, name, 'desc', episode_count FROM course_master WHERE category_id = ?";
-    [$courseStmt, $courseResult] = execQuery($query, "i", $categoryId);
+    $query = "SELECT id, name, description FROM category_master WHERE parent_id = ?";
+    [$categoryStmt, $categoryResult] = exec_query($query, "i", $categoryId);
+    $query = "SELECT id, name, description, episode_count FROM course_master WHERE category_id = ?";
+    [$courseStmt, $courseResult] = exec_query($query, "i", $categoryId);
 }
 
 $subcategories = [];
@@ -50,7 +50,7 @@ header('Content-Type: application/json');
 echo json_encode( [
     "name" => $name,
     "id" => $categoryId,
-    "desc" => $desc,
+    "desc" => $description,
     "subcategories" => $subcategories,
     "courses" => $courses
 ]);

@@ -3,7 +3,7 @@ require 'user/db_config.php';
 require 'user/token.php';
 require 'user/validation.php';
 
-$data = ENSURE_TOKEN_METHOD_ARGUMENT(['user_id']);
+$data = ensure_token_method_argument(['user_id']);
 
 $userName = $data['user_id'];
 $courseId = $data['course_id'] ?? null;
@@ -13,8 +13,31 @@ $pageSize = $data['page_size'] ?? null;
 $pageNumber = $data['page_number'] ?? null;
 
 
+function returnCompressed($data) {
+    $acceptEncoding = $_SERVER['HTTP_ACCEPT_ENCODING'] ?? '';
+    $canCompress = strpos($acceptEncoding, 'gzip') !== false;
+    
+    if ($canCompress) {
+        $compressedContent = gzencode($data, 9);
+
+        if ($compressedContent === false) {
+            error_log("Failed to compress content");
+            send_error_response(500, "Internal Server Error: Unable to compress file.");
+        }
+    
+        header('Content-Encoding: gzip');
+        header('Vary: Accept-Encoding');
+        header('Content-Length: ' . strlen($compressedContent));
+    
+        echo $compressedContent;
+    } else {
+        echo $data;
+    }
+    exit();
+}
+
 function queryRecordCount($query, $paramType, ...$params) {
-    [$stmt, $result] = execQuery($query, $paramType, ...$params);
+    [$stmt, $result] = exec_query($query, $paramType, ...$params);
     $count = $result->fetch_row()[0];
     $stmt->close();
 
@@ -22,7 +45,7 @@ function queryRecordCount($query, $paramType, ...$params) {
 }
 
 function querySentences($query, $paramType, ...$params) {
-    [$stmt, $result] = execQuery($query, $paramType, ...$params);
+    [$stmt, $result] = exec_query($query, $paramType, ...$params);
 
     $sentences = [];
     while ($row = $result->fetch_assoc()) {
@@ -38,7 +61,7 @@ function querySentences($query, $paramType, ...$params) {
 function getSentencesByEpisode($userId, $episodeId) {
     $query = "
         SELECT sm.id, sm.episode_id, sm.sentence_idx, sm.start_time, sm.end_time, sm.english, sm.chinese,
-        IF(fs.sentence_id IS NOT NULL, 1, 0) AS is_fav, sm.is_have_desc
+        IF(fs.sentence_id IS NOT NULL, 1, 0) AS is_fav, sm.has_description
         FROM sentence_master sm
         LEFT JOIN favorite_sentence fs ON fs.sentence_id = sm.id AND fs.user_id = ?
         WHERE sm.episode_id = ?";
@@ -52,7 +75,7 @@ function getFavoriteSentencesByEpisode($favoriteListId, $episodeId) {
     global $conn;
 
     $baseQuery = "SELECT sm.id, sm.episode_id, sm.sentence_idx, sm.start_time, sm.end_time, sm.english, sm.chinese,
-                1 AS is_fav, sm.is_have_desc
+                1 AS is_fav, sm.has_description
                 FROM favorite_sentence fs
                 INNER JOIN sentence_master sm ON fs.sentence_id = sm.id";
     if ($favoriteListId == 0) {
@@ -79,7 +102,7 @@ function getFavoriteSentencesByCourse($favoriteListId, $courseId, $pageSize, $of
         $countQuery = "SELECT COUNT(*) as total $baseQuery WHERE em.course_id = ?";
         $totalCount = queryRecordCount($countQuery, "i", $courseId);
         $query = "SELECT sm.id, sm.episode_id, sm.sentence_idx, sm.start_time, sm.end_time, sm.english, sm.chinese,
-                  1 AS is_fav, sm.is_have_desc
+                  1 AS is_fav, sm.has_description
                   $baseQuery
                   WHERE em.course_id = ?
                   LIMIT ? OFFSET ?";
@@ -90,7 +113,7 @@ function getFavoriteSentencesByCourse($favoriteListId, $courseId, $pageSize, $of
                         WHERE fs.list_id = ? AND em.course_id = ?";
         $totalCount = queryRecordCount($countQuery, "ii", $favoriteListId, $courseId);
         $query = "SELECT sm.id, sm.episode_id, sm.sentence_idx, sm.start_time, sm.end_time, sm.english, sm.chinese,
-                  1 AS is_fav, sm.is_have_desc
+                  1 AS is_fav, sm.has_description
                   $baseQuery
                   WHERE fs.list_id = ? AND em.course_id = ?
                   LIMIT ? OFFSET ?";
@@ -107,7 +130,7 @@ function getFavoriteSentencesWithoutId($favoriteListId, $pageSize, $offset) {
     global $conn;
 
     $baseQuery = "SELECT sm.id, sm.episode_id, sm.sentence_idx, sm.start_time, sm.end_time, sm.english, sm.chinese,
-                  1 AS is_fav, sm.is_have_desc
+                  1 AS is_fav, sm.has_description
                   FROM favorite_sentence fs
                   INNER JOIN sentence_master sm ON fs.sentence_id = sm.id";
 
@@ -163,5 +186,5 @@ if ($favoriteListId !== null) {
 }
 
 header('Content-Type: application/json');
-echo json_encode($favorites);
+returnCompressed(json_encode($favorites));
 ?>

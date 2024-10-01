@@ -4,13 +4,13 @@ require '../vendor/autoload.php';
 require 'validation.php';
 require 'token.php';
 
-$data = $data = ENSURE_TOKEN_METHOD_ARGUMENT(['user_name', 'password']);
+$data = $data = ensure_token_method_argument(['user_name', 'password']);
 // var_dump($input);
 
 $userName = $data['user_name'];
 $password = $data['password'];
 
-if (!validateUserName($userName)) {
+if (!validate_user_name($userName)) {
     http_response_code(400);
     echo json_encode(array("error" => "Invalid user ID format"));
     exit;

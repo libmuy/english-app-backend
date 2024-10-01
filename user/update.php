@@ -8,7 +8,7 @@ $userName = $data['user_name'];
 $password = $data['password'];
 $email = $data['email'];
 
-if (!validateUserName($userName)) {
+if (!validate_user_name($userName)) {
     http_response_code(400);
     echo json_encode(['message' => 'Invalid user id']);
     exit;
@@ -17,7 +17,7 @@ $set_pass = false;
 $set_email = false;
 
 if (strlen($email) > 0) {
-    if (!validateEmail($email)) {
+    if (!validate_email($email)) {
         http_response_code(400);
         echo json_encode(['message' => 'Email address is invalid']);
         exit;
@@ -27,7 +27,7 @@ if (strlen($email) > 0) {
 }
 
 if (strlen($password) > 0) {
-    if (!validatePassword($password)) {
+    if (!validate_password($password)) {
         http_response_code(400);
         echo json_encode(['message' => 'Password address is invalid']);
         exit;

@@ -3,15 +3,15 @@ require 'user/db_config.php';
 require 'user/token.php';
 require 'user/validation.php';
 
-$data = ENSURE_TOKEN_METHOD_ARGUMENT(['user_id']);
+$data = ensure_token_method_argument(['user_id']);
 $userName = $data['user_id'];
 
-$query = "SELECT course_id, episode_id, favorite_list_id, audio_length_sec, sentence_count, title, last_sentence_id, learned_date
+$query = "SELECT course_id, episode_id, favorite_list_id, audio_length_sec, sentence_count, title, last_sentence_id, last_learned
     FROM history 
     WHERE user_id = ? 
-    ORDER BY learned_date";
+    ORDER BY last_learned";
 
-[$stmt, $result] = execQuery($query, "s", $userName);
+[$stmt, $result] = exec_query($query, "s", $userName);
 
 $categories = [];
 while ($row = $result->fetch_assoc()) {
@@ -25,7 +25,7 @@ while ($row = $result->fetch_assoc()) {
         'sentence_count' => $row['sentence_count'],
         'title' => $row['title'],
         'last_sentence_id' => $row['last_sentence_id'],
-        'learned_date' => $row['learned_date'],
+        'last_learned' => $row['last_learned'],
     ];
 }
 

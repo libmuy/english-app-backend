@@ -1,70 +1,73 @@
 <?php
-require 'user/db_config.php';
-require 'user/token.php';
-require 'user/validation.php';
-require 'vendor/autoload.php';
+require_once 'user/db_config.php';
+require_once 'user/token.php';
+require_once 'user/validation.php';
+require_once 'vendor/autoload.php';
 
-// Configuration: enable or disable compression
-$enableCompression = true; // Change this to false to disable compression
-
-// Check parameters
-$data = ENSURE_TOKEN_METHOD_ARGUMENT(['episode_id']);
+// Ensure the request method and token, and validate input parameters
+$data = ensure_token_method_argument(['episode_id']); // Assuming proper function name and implementation
 $episodeId = $data['episode_id'];
 
-// Get Path of audio
+// Validate that episode_id is an integer
+if (!filter_var($episodeId, FILTER_VALIDATE_INT)) {
+    send_error_response(400, "Invalid episode ID.");
+}
+
+// Database query to fetch the file path
 $query = "SELECT path FROM episode_master WHERE id = ?";
-[$stmt, $result] = execQuery($query, "s", $episodeId);
-$row = $result->fetch_assoc();
-$filePath = __DIR__ . '/resources/' . trim($row['path']) . '.mp3';
+[$stmt, $result] = exec_query($query, "i", $episodeId);
+
+if (!$stmt || !$result) {
+    error_log("Database query failed for episode_id: " . $episodeId);
+    send_error_response(500, "Internal Server Error: Database query failed.");
+}
+
+if ($row = $result->fetch_assoc()) {
+    $filePath = __DIR__ . '/resources/' . trim($row['path']) . '.mp3';
+} else {
+    send_error_response(404, "Episode not found.");
+}
+
 $stmt->close();
 
-error_log("fetch resource: " . $filePath);
+// Log the file path (ensure not to expose sensitive info in production)
+error_log("Fetching resource: " . $filePath);
 
-// File exist check
-if ((!file_exists($filePath)) || (!is_file($filePath))) {
-    http_response_code(404);
-    echo json_encode(array("message" => "File not found: " . $filePath));
-    exit();
+// Check if the file exists and is a regular file
+if (!is_file($filePath)) {
+    send_error_response(404, "File not found: $filePath");
 }
 
-$mimeType = mime_content_type($filePath);
+// Determine the MIME type
+$mimeType = mime_content_type($filePath) ?: 'application/octet-stream';
 header('Content-Type: ' . $mimeType);
+header('X-Content-Type-Options: nosniff');
 
-$content = file_get_contents($filePath);
+// Optional: Set caching headers
+header('Cache-Control: public, max-age=604800'); // Cache for 1 week
 
-if ($content === false) {
-    error_log("Failed to read file: " . $filePath);
-    http_response_code(500);
-    echo json_encode(array("message" => "Internal Server Error: Unable to read file."));
-    exit();
+// Get the size of the file
+$fileSize = filesize($filePath);
+if ($fileSize === false) {
+    error_log("Failed to get file size for: " . $filePath);
+    send_error_response(500, "Internal Server Error: Unable to retrieve file size.");
 }
 
-// Check if compression is enabled and the client supports gzip encoding
-if ($enableCompression && strpos($_SERVER['HTTP_ACCEPT_ENCODING'], 'gzip') !== false) {
-    // Compress the content
-    $compressedContent = gzencode($content, 9);
+header('Content-Length: ' . $fileSize);
+header('Content-Disposition: inline; filename="' . basename($filePath) . '"');
 
-    if ($compressedContent === false) {
-        error_log("Failed to compress content.");
-        http_response_code(500);
-        echo json_encode(array("message" => "Internal Server Error: Unable to compress file."));
-        return;
-    }
-
-    // Set headers for compressed content
-    header('Content-Encoding: gzip');
-    header('Vary: Accept-Encoding');
-    header('Content-Length: ' . strlen($compressedContent));
-
-    // Output the compressed content
-    echo $compressedContent;
-} else {
-    // Set headers for uncompressed content
-    header('Content-Length: ' . strlen($content));
-
-    // Output the uncompressed content
-    echo $content;
+// Stream the file to handle large files efficiently
+$fileHandle = fopen($filePath, 'rb');
+if ($fileHandle === false) {
+    error_log("Failed to open file: " . $filePath);
+    send_error_response(500, "Internal Server Error: Unable to open file.");
 }
 
+// Stream the file in chunks
+while (!feof($fileHandle)) {
+    echo fread($fileHandle, 1024 * 8); // 8KB chunks
+    flush(); // Ensure immediate output
+}
 
+fclose($fileHandle);
 ?>
