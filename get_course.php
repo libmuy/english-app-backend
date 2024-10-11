@@ -4,10 +4,10 @@ require 'user/token.php';
 require 'user/validation.php';
 
 $data = ensure_token_method_argument(['course_id']);
-$courseId = $data['course_id'];
+$userId = $data['course_id'];
 
 $query = "SELECT id, name, description, episode_count FROM course_master WHERE id = ?";
-[$stmt, $result] = exec_query($query, "i", $courseId);
+[$stmt, $result] = exec_query($query, "i", $userId);
 $row = $result->fetch_assoc();
 $course = [
     'id' => $row['id'],
@@ -18,14 +18,14 @@ $course = [
 $stmt->close();
 
 $query = "SELECT id, name, audio_length_sec, sentence_count FROM episode_master WHERE course_id = ?";
-[$stmt, $result] = exec_query($query, "i", $courseId);
-$episodes = [];
+[$stmt, $result] = exec_query($query, "i", $userId);
+$favList = [];
 while ($row = $result->fetch_assoc()) {
-    $episodes[] = $row;
+    $favList[] = $row;
 }
 $stmt->close();
 
-$course['episodes'] = $episodes;
+$course['episodes'] = $favList;
 header('Content-Type: application/json');
 echo json_encode( $course);
 

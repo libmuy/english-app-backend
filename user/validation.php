@@ -70,6 +70,8 @@ function ensure_token_method()
 function exec_query($query, $paramType="", ...$params)
 {
     global $conn;
+    $paramStr = implode(', ', $params);
+    log2file("Query: $query, type: $paramType, params: $paramStr");
 
     try {
         // Prepare the statement
@@ -95,11 +97,11 @@ function exec_query($query, $paramType="", ...$params)
         return [$stmt, $stmt->affected_rows];
     } catch (mysqli_sql_exception $e) {
         // Log the exception
-        log_error("MySQLi Error: " . $e->getMessage(), $query);
+        log2file("MySQLi Error: " . $e->getMessage() . ", Query: $query");
         throw $e;
     } catch (Exception $e) {
         // Log the exception
-        log_error("General Error: " . $e->getMessage(), $query);
+        log2file("General Error: " . $e->getMessage() . ", Query: $query");
         throw $e;
     }
 }
@@ -123,14 +125,51 @@ function is_development()
     return defined('ENVIRONMENT') && ENVIRONMENT === 'development';
 }
 
-function log_error($errorMessage, $query)
+function log2file($errorMessage)
 {
     // Define the path to your log file
     $logFile = __DIR__ . '/../error_log.txt';
 
     // Prepare the log entry with a timestamp
-    $logEntry = "[" . date('Y-m-d H:i:s') . "] ERROR: " . $errorMessage . " | QUERY: " . $query . PHP_EOL;
+    $logEntry = "[" . date('Y-m-d H:i:s') . "] " . $errorMessage . PHP_EOL;
 
     // Append the log entry to the log file
     file_put_contents($logFile, $logEntry, FILE_APPEND);
+}
+
+/**
+ * Function to prepare the WHERE clause for the UNIQUE key,
+ * handling NULLs appropriately.
+ *
+ * @param array $uniqueKeys The list of unique key columns.
+ * @param array $data The data array containing column values.
+ * @return array An array containing the WHERE clause string, parameter types, and parameters.
+ */
+function prepareWhereClause($uniqueKeys, $data, $ignoreNull = false) {
+    $whereClauses = [];
+    $params = [];
+    $types = '';
+
+    foreach ($uniqueKeys as $key) {
+        if (!isset($data[$key]) || is_null($data[$key])) {
+            // Handle NULL values
+            if ($ignoreNull) {
+                continue;
+            }
+            $whereClauses[] = "`$key` IS NULL";
+        } else {
+            // Handle non-NULL values
+            $whereClauses[] = "`$key` = ?";
+            $params[] = $data[$key];
+            // Determine the type for bind_param
+            if ($key === 'title') {
+                $types .= 's'; // String
+            } else {
+                $types .= 'i'; // Integer
+            }
+        }
+    }
+
+    $whereClause = implode(' AND ', $whereClauses);
+    return [$whereClause, $types, $params];
 }

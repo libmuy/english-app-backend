@@ -12,25 +12,15 @@ $query = "SELECT course_id, episode_id, favorite_list_id, audio_length_sec, sent
     ORDER BY last_learned";
 
 [$stmt, $result] = exec_query($query, "s", $userName);
-
-$categories = [];
+$history = [];
 while ($row = $result->fetch_assoc()) {
-    $categories[] = [
-        'src' => [
-            'course_id' => $row['course_id'],
-            'episode_id' => $row['episode_id'],
-            'favorite_list_id' => $row['favorite_list_id'],
-        ],
-        'audio_length_sec' => $row['audio_length_sec'],
-        'sentence_count' => $row['sentence_count'],
-        'title' => $row['title'],
-        'last_sentence_id' => $row['last_sentence_id'],
-        'last_learned' => $row['last_learned'],
-    ];
+    $history[] = $row;
 }
 
 $stmt->close();
-
 header('Content-Type: application/json');
-echo json_encode( $categories);
-?>
+if (empty($history)) {
+    echo json_encode( []);
+} else {
+    echo json_encode( $history);
+}

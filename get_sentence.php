@@ -6,11 +6,11 @@ require 'user/validation.php';
 $data = ensure_token_method_argument(['user_id']);
 
 $userName = $data['user_id'];
-$courseId = $data['course_id'] ?? null;
+$userId = $data['course_id'] ?? null;
 $episodeId = $data['episode_id'] ?? null;
 $favoriteListId = $data['favorite_list_id'] ?? null;
 $pageSize = $data['page_size'] ?? null;
-$pageNumber = $data['page_number'] ?? null;
+$offset = $data['offset'] ?? null;
 
 
 function returnCompressed($data) {
@@ -66,7 +66,13 @@ function getSentencesByEpisode($userId, $episodeId) {
         LEFT JOIN favorite_sentence fs ON fs.sentence_id = sm.id AND fs.user_id = ?
         WHERE sm.episode_id = ?";
 
-    return querySentences($query, "ii", $userId, $episodeId);
+    $sentences = querySentences($query, "ii", $userId, $episodeId);
+
+    return [
+        'total_count' => count($sentences),
+        'offset' => 0,
+        'sentences' => $sentences
+    ];
 }
 
 
@@ -78,7 +84,7 @@ function getFavoriteSentencesByEpisode($favoriteListId, $episodeId) {
                 1 AS is_fav, sm.has_description
                 FROM favorite_sentence fs
                 INNER JOIN sentence_master sm ON fs.sentence_id = sm.id";
-    if ($favoriteListId == 0) {
+    if ($favoriteListId == -1) {
         $query = "$baseQuery WHERE sm.episode_id = ?";
         $sentences = querySentences($query, "i", $episodeId);
     } else {
@@ -87,7 +93,8 @@ function getFavoriteSentencesByEpisode($favoriteListId, $episodeId) {
     }
 
     return [
-        'total' => count($sentences),
+        'total_count' => count($sentences),
+        'offset' => 0,
         'sentences' => $sentences
     ];
 }
@@ -98,7 +105,7 @@ function getFavoriteSentencesByCourse($favoriteListId, $courseId, $pageSize, $of
     $baseQuery = "FROM favorite_sentence fs
                     INNER JOIN sentence_master sm ON fs.sentence_id = sm.id
                     INNER JOIN episode_master em ON sm.episode_id = em.id";
-    if ($favoriteListId == 0) {
+    if ($favoriteListId == -1) {
         $countQuery = "SELECT COUNT(*) as total $baseQuery WHERE em.course_id = ?";
         $totalCount = queryRecordCount($countQuery, "i", $courseId);
         $query = "SELECT sm.id, sm.episode_id, sm.sentence_idx, sm.start_time, sm.end_time, sm.english, sm.chinese,
@@ -121,20 +128,19 @@ function getFavoriteSentencesByCourse($favoriteListId, $courseId, $pageSize, $of
     }
 
     return [
-        'total' => $totalCount,
+        'total_count' => $totalCount,
+        'offset' => $offset,
         'sentences' => $sentences
     ];
 }
 
 function getFavoriteSentencesWithoutId($favoriteListId, $pageSize, $offset) {
-    global $conn;
-
     $baseQuery = "SELECT sm.id, sm.episode_id, sm.sentence_idx, sm.start_time, sm.end_time, sm.english, sm.chinese,
                   1 AS is_fav, sm.has_description
                   FROM favorite_sentence fs
                   INNER JOIN sentence_master sm ON fs.sentence_id = sm.id";
 
-    if ($favoriteListId == 0) {
+    if ($favoriteListId == -1) {
         $countQuery = "SELECT COUNT(*) as total FROM favorite_sentence";
         $totalCount = queryRecordCount($countQuery, "");
         $query = "$baseQuery LIMIT ? OFFSET ?";
@@ -147,15 +153,14 @@ function getFavoriteSentencesWithoutId($favoriteListId, $pageSize, $offset) {
     }
 
     return [
-        'total' => $totalCount,
+        'total_count' => $totalCount,
+        'offset' => $offset,
         'sentences' => $sentences
     ];
 }
 
 # Function to retrieve favorite sentences based on favorite list ID, course ID, and episode ID
-function getFavoriteSentences($db, $favoriteListId, $courseId, $episodeId, $pageNumber = 1, $pageSize = 10) {
-    $offset = ($pageNumber - 1) * $pageSize;
-
+function getFavoriteSentences($favoriteListId, $courseId, $episodeId, $offset, $pageSize) {
     # episod is specified, get all favorite sentences of this episod
     if ($episodeId !== null) {
         return getFavoriteSentencesByEpisode($favoriteListId, $episodeId);
@@ -172,10 +177,10 @@ function getFavoriteSentences($db, $favoriteListId, $courseId, $episodeId, $page
 // var_dump($episodeId);
 
 if ($favoriteListId !== null) {
-    $favorites = getFavoriteSentences($db, $favoriteListId, $courseId, $episodeId, $pageNumber, $pageSize);
+    $sentences = getFavoriteSentences($favoriteListId, $userId, $episodeId, $offset, $pageSize);
 } elseif ($episodeId !== null) {
-    $favorites = getSentencesByEpisode($db, $episodeId);
-} elseif ($courseId !== null) {
+    $sentences = getSentencesByEpisode($userId, $episodeId);
+} elseif ($userId !== null) {
     http_response_code(400);
     echo json_encode(['error' => 'fetch all sentence of a course is not permited']);
     exit();
@@ -186,5 +191,4 @@ if ($favoriteListId !== null) {
 }
 
 header('Content-Type: application/json');
-returnCompressed(json_encode($favorites));
-?>
+returnCompressed(json_encode($sentences));

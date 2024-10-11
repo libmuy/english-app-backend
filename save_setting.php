@@ -182,15 +182,13 @@ if ($add) {
 
 
 // Execute the update query
-[$stmt, $result] = exec_query($query, $types, ...$params);
-$updated = $stmt->affected_rows > 0;
-// Close the statement
+[$stmt, $affected_rows] = exec_query($query, $types, ...$params);
 $stmt->close();
 
-log_error("updated: $updated", "query: $query");
+log2file("affected_rows: $affected_rows" . ", query: $query");
 
 // Check if the update was successful
-if (!$updated && !exist_in_db($user_id)) {
+if ($affected_rows <= 0 && !exist_in_db($user_id)) {
     send_error_response(404, 'User settings not found.');
 }
 

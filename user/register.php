@@ -22,9 +22,29 @@ function checkUserExist($userName)
     }
 }
 
+
+function insertDefaultFavoriteList($userId)
+{
+    [$stmt, $affected_rows] = exec_query(
+        "INSERT INTO favorite_list_master (user_id, id, name) VALUES (?, ?, ?)",
+        "iis",
+        $userId,
+        0,
+        'default favorite list',
+    );
+    $stmt->close();
+    // insert rows
+    if ($affected_rows <= 0) {
+        http_response_code(500);
+        echo json_encode(['error' => 'Faild to register user into database']);
+        exit();
+    }
+}
+
+
+
 function insertUser($userName, $password, $email)
 {
-    global $conn;
     $hashedPassword = hash('sha256', $password);
     [$stmt, $affected_rows] = exec_query(
         "INSERT INTO user (name, password, email) VALUES (?, ?, ?)",
@@ -42,7 +62,7 @@ function insertUser($userName, $password, $email)
     }
 }
 
-function genResp($userName)
+function getUserId($userName)
 {
     [$stmt, $result] = exec_query(
         "SELECT * FROM user WHERE name = ?",
@@ -50,10 +70,15 @@ function genResp($userName)
         $userName
     );
     $user = $result->fetch_assoc();
-    // Generate JWT token
-    $jwt = generateToken($userName);
-    echo json_encode(array("token" => $jwt, "user_name" => $userName, "user_id" => (int) $user['id'], "email" => $user['email']));
     $stmt->close();
+
+    return $user['id'];
+}
+
+function genResp($userId, $userName, $email)
+{
+    $jwt = generateToken($userName);
+    echo json_encode(["token" => $jwt, "user_name" => $userName, "user_id" => (int) $userId, "email" => $email]);
 }
 
 $data = ensure_token_method_argument(['user_name', 'password', 'email']);
@@ -68,8 +93,13 @@ if (!validate_user_name($userName) || !validate_password($password) || !validate
 }
 
 checkUserExist($userName);
-insertUser($userName, $password, $email);
-genResp($userName);
 
-$conn->close();
-?>
+// start a transaction, exit before commit will cause a auto rollback
+$conn->begin_transaction();
+insertUser($userName, $password, $email);
+$userId = getUserId($userName);
+insertDefaultFavoriteList($userId);
+$conn->commit();
+
+genResp($userId, $userName, $email);
+
