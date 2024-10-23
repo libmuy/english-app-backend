@@ -9,12 +9,7 @@ $allowed_columns = [
     'theme',
     'theme_color',
     'font_size',
-    'is_visible_text_cn',
-    'is_visible_text_en',
-    'is_visible_input',
-    'is_visible_select',
-    'is_auto_play_after_switch',
-    'is_auto_play_next',
+    'flags',
     'playback_times',
     'playback_interval',
     'playback_speed',
@@ -52,20 +47,7 @@ function validate_data_types($data) {
                 }
                 break;
             case 'font_size':
-                if (!is_int($value) || $value < 8 || $value > 72) { // Example constraints
-                    $errors[] = "font_size must be an integer between 8 and 72.";
-                }
-                break;
-            case 'is_visible_text_cn':
-            case 'is_visible_text_en':
-            case 'is_visible_input':
-            case 'is_visible_select':
-            case 'is_auto_play_after_switch':
-            case 'is_auto_play_next':
-                if (!is_int($value)) {
-                    $errors[] = "$key must be a integer.";
-                }
-                break;
+            case 'flags':
             case 'playback_times':
             case 'playback_interval':
                 if (!is_int($value) || $value < 0) {
@@ -139,12 +121,7 @@ foreach ($data as $key => $value) {
         case 'playback_interval':
         case 'theme_color':
         case 'default_favorite_list':
-        case 'is_visible_text_cn':
-        case 'is_visible_text_en':
-        case 'is_visible_input':
-        case 'is_visible_select':
-        case 'is_auto_play_after_switch':
-        case 'is_auto_play_next':
+        case 'flags':
             $types .= 'i';
             $params[] = $value;
             break;

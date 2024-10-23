@@ -13,4 +13,4 @@ $setting = $result->fetch_assoc();
 $stmt->close();
 
 header('Content-Type: application/json');
-echo json_encode( $setting);
+echo json_encode( $setting ?? new stdClass());

@@ -4,33 +4,23 @@ require 'user/db_config.php';
 require 'user/token.php';
 require 'user/validation.php';
 
-// Define the UNIQUE key columns
-$uniqueKeys = ['user_id', 'course_id', 'episode_id', 'favorite_list_id'];
-
-// Define all possible columns in the history table
-$allKeys = [
-    'user_id',
-    'course_id',
-    'episode_id',
-    'favorite_list_id',
-    'audio_length_sec',
-    'sentence_count',
-    'title',
-    'last_sentence_id',
-    // 'last_learned' // Excluded to let MySQL handle it automatically
-];
-
-// Assuming 'last_learned' and 'last_sentence_id' are required fields
-$data = ensure_token_method_argument(['last_learned', 'last_sentence_id']);
-
-$conn->begin_transaction();
-
-try {
-    // Step 4: Prepare the WHERE clause for the UPDATE statement
+function historyExists($data)
+{
+    $uniqueKeys = ['user_id', 'course_id', 'episode_id', 'favorite_list_id'];
     list($whereClause, $whereTypes, $whereParams) = prepareWhereClause($uniqueKeys, $data);
 
-    // Step 5: Prepare the UPDATE SQL statement
-    // Using COALESCE to only update fields that are provided (non-NULL)
+    $query = "SELECT 1 FROM `history` WHERE $whereClause";
+    [$stmt, $result] = exec_query($query, $whereTypes, ...$whereParams);
+    $stmt->close();
+
+    return $result->num_rows > 0;
+}
+
+function updateHistory($data, $userId)
+{
+    $uniqueKeys = ['user_id', 'course_id', 'episode_id', 'favorite_list_id'];
+    list($whereClause, $whereTypes, $whereParams) = prepareWhereClause($uniqueKeys, $data);
+
     $updateFields = [
         'audio_length_sec',
         'sentence_count',
@@ -72,56 +62,70 @@ try {
     // Step 6: Execute the UPDATE statement using exec_query()
     [$stmtUpdate, $affectedRows] = exec_query($updateQuery, $fullUpdateTypes, ...$fullUpdateParams);
     $stmtUpdate->close();
+}
 
-    if ($affectedRows === 0) {
-        // Step 7: If no rows were updated, perform an INSERT
-        // Prepare the INSERT SQL statement
-        $insertColumns = [];
-        $insertPlaceholders = [];
-        $insertParams = [];
-        $insertTypes = '';
 
-        foreach ($allKeys as $key) {
-            if (isset($data[$key])) {
-                $insertColumns[] = "`$key`";
-                $insertPlaceholders[] = "?";
-                $insertParams[] = $data[$key];
-                // Determine the type
-                if ($key === 'title') {
-                    $insertTypes .= 's';
-                } else {
-                    $insertTypes .= 'i';
-                }
+function insertHistory($data, $userId)
+{
+    // Define all possible columns in the history table
+    $allKeys = [
+        'user_id',
+        'course_id',
+        'episode_id',
+        'favorite_list_id',
+        'audio_length_sec',
+        'sentence_count',
+        'title',
+        'last_sentence_id',
+        // 'last_learned' // Excluded to let MySQL handle it automatically
+    ];
+    $insertColumns = [];
+    $insertPlaceholders = [];
+    $insertParams = [];
+    $insertTypes = '';
+
+    foreach ($allKeys as $key) {
+        if (isset($data[$key])) {
+            $insertColumns[] = "`$key`";
+            $insertPlaceholders[] = "?";
+            $insertParams[] = $data[$key];
+            // Determine the type
+            if ($key === 'title') {
+                $insertTypes .= 's';
+            } else {
+                $insertTypes .= 'i';
             }
         }
-
-        // Construct the INSERT statement
-        $insertColumnsStr = implode(', ', $insertColumns);
-        $insertPlaceholdersStr = implode(', ', $insertPlaceholders);
-        $insertQuery = "INSERT INTO `history` ($insertColumnsStr) VALUES ($insertPlaceholdersStr)";
-
-        // Execute the INSERT statement using exec_query()
-        [$stmtInsert, $insertedRows] = exec_query($insertQuery, $insertTypes, ...$insertParams);
-        $stmtInsert->close();
-
-        if ($insertedRows > 0) {
-            log2file("Inserted new history record for user_id: {$history->user_id}");
-        } else {
-            throw new Exception("Failed to insert new history record.");
-        }
-    } else {
-        log2file("Updated existing history record for user_id: {$history->user_id}");
     }
 
-    // Step 8: Commit the transaction
-    $conn->commit();
+    // Construct the INSERT statement
+    $insertColumnsStr = implode(', ', $insertColumns);
+    $insertPlaceholdersStr = implode(', ', $insertPlaceholders);
+    $insertQuery = "INSERT INTO `history` ($insertColumnsStr) VALUES ($insertPlaceholdersStr)";
 
-    // Step 9: Respond with success
+    // Execute the INSERT statement using exec_query()
+    [$stmtInsert, $insertedRows] = exec_query($insertQuery, $insertTypes, ...$insertParams);
+    $stmtInsert->close();
+
+    if ($insertedRows > 0) {
+        log2file("Inserted new history record for user_id: $userId");
+    } else {
+        throw new Exception("Failed to insert new history record.");
+    }
+
+}
+
+$data = ensure_token_method_argument(['user_id', 'last_learned', 'last_sentence_id']);
+$userId = $data['user_id'];
+try {
+    if (historyExists($data)) {
+        updateHistory($data, $userId);
+    } else {
+        insertHistory($data, $userId);
+    }
+
     echo json_encode(['success' => true, 'message' => 'History upserted successfully.']);
 
 } catch (Exception $e) {
-    // Step 10: Rollback the transaction on error
-    $conn->rollback();
-    log2file("Transaction failed: " . $e->getMessage());
     send_error_response(500, 'Internal Server Error: ' . $e->getMessage());
 }

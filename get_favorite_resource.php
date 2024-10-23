@@ -8,27 +8,26 @@ $userName = $data['user_id'];
 // reduces the number of database queries from 3 to 1, 
 // potentially improving performance by minimizing round trips to the database
 $query = "
-    SELECT type, cm.id, cm.name, description, NULL AS audio_length_sec, NULL AS sub_count
-    FROM favorite_resource fr
-    JOIN category_master cm ON fr.id = cm.id
-    WHERE fr.user_id = ? AND fr.type = 'category'
-
-    UNION ALL
-
-    SELECT type, cr.id, cr.name, description, NULL AS audio_length_sec, cr.episode_count AS sub_count
-    FROM favorite_resource fr
-    JOIN course_master cr ON fr.id = cr.id
-    WHERE fr.user_id = ? AND fr.type = 'course'
-
-    UNION ALL
-
-    SELECT type, em.id, em.name, NULL AS description, em.audio_length_sec, em.sentence_count AS sub_count
-    FROM favorite_resource fr
-    JOIN episode_master em ON fr.id = em.id
-    WHERE fr.user_id = ? AND fr.type = 'episod'
+SELECT 
+    fr.type,
+    COALESCE(cm.id, cr.id, em.id) AS id,
+    COALESCE(cm.name, cr.name, em.name) AS name,
+    COALESCE(cm.description, cr.description) AS description,
+    em.audio_length_sec,
+    COALESCE(cr.episode_count, em.sentence_count) AS sub_count
+FROM 
+    favorite_resource fr
+LEFT JOIN 
+    category_master cm ON fr.id = cm.id AND fr.type = 'category'
+LEFT JOIN 
+    course_master cr ON fr.id = cr.id AND fr.type = 'course'
+LEFT JOIN 
+    episode_master em ON fr.id = em.id AND fr.type = 'episod'
+WHERE 
+    fr.user_id = ?
 ";
 
-[$stmt, $result] = exec_query($query, "sss", $userName, $userName, $userName);
+[$stmt, $result] = exec_query($query, "s", $userName);
 
 // Initialize empty arrays for categories, courses, and episodes
 $history = [];
