@@ -2,14 +2,12 @@
 require __DIR__ . '/../cors_header.php';
 
 $host = 'mysql';
-$db = 'english_app_new';
-$user = 'mquser';
-$pass = 'mqpass';
-
-// echo "Connecting to database...\n";
+$db = getenv('MYSQL_DATABASE');
+$user = getenv('MYSQL_USER');
+$pass = getenv('MYSQL_PASSWORD');
 
 $conn = new mysqli($host, $user, $pass, $db);
 
 if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
+    die("Connection failed: $conn->connect_error");
 }
