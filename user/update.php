@@ -4,11 +4,11 @@ require 'validation.php';
 
 $data = json_decode(file_get_contents('php://input'), true);
 
-$userName = $data['user_name'];
+$userId = $data['user_name'];
 $password = $data['password'];
 $email = $data['email'];
 
-if (!validate_user_name($userName)) {
+if (!validate_user_name($userId)) {
     http_response_code(400);
     echo json_encode(['message' => 'Invalid user id']);
     exit;
@@ -36,18 +36,18 @@ if (strlen($password) > 0) {
     }
 }
 
-$userName = $conn->real_escape_string($userName);
+$userId = $conn->real_escape_string($userId);
 $password = $conn->real_escape_string($password);
 $email = $conn->real_escape_string($email);
 
 $hashedPassword = hash('sha256', $password); // Hash the password using SHA-256
 
 if ($set_email && $set_pass) {
-    $sql = "UPDATE user SET password = '$hashedPassword', email = '$email' WHERE name = '$userName'";
+    $sql = "UPDATE user SET password = '$hashedPassword', email = '$email' WHERE name = '$userId'";
 } else if ($set_email && !$set_pass) {
-    $sql = "UPDATE user SET email = '$email' WHERE name = '$userName'";
+    $sql = "UPDATE user SET email = '$email' WHERE name = '$userId'";
 } else if (!$set_email && $set_pass) {
-    $sql = "UPDATE user SET password = '$hashedPassword' WHERE name = '$userName'";
+    $sql = "UPDATE user SET password = '$hashedPassword' WHERE name = '$userId'";
 } else {
     http_response_code(400);
     echo json_encode(['message' => 'Please specify password or email']);

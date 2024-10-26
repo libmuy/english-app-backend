@@ -21,11 +21,8 @@ function send_error_response($statusCode, $message) {
     exit();
 }
 
-
-function ensure_token_method_argument($args, $validate = true)
+function ensure_method_argument($args)
 {
-    ensure_token_method();
-    
     $data = json_decode(file_get_contents('php://input'), true);
     if (json_last_error() !== JSON_ERROR_NONE) {
         http_response_code(400);
@@ -46,24 +43,43 @@ function ensure_token_method_argument($args, $validate = true)
             send_error_response(400, "Missing param: $arg");
         }
     }
+    return $data;
+}
+
+
+function ensure_token_method_argument($args = [])
+{
+    ensure_method();
+    
+    $userId = ensure_token();
+    
+    if (empty($args)) {
+        return ['user_id' => $userId];
+    }
+    $data = ensure_method_argument($args);
+
+    $data['user_id'] = $userId; // Add the user ID to the data array
     
     return $data;
 }
 
 
-
-
-
-function ensure_token_method()
+// Validate method
+function ensure_method()
 {
-    try {
-        // validateToken();
-    } catch (Exception $e) {
-        send_error_response(401, 'Invalid token');
-    }
-
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         send_error_response(401, 'Not Permitted Method: Get');
+    }
+}
+
+
+// Validate token and return User ID
+function ensure_token()
+{
+    try {
+        return validateToken();
+    } catch (Exception $e) {
+        send_error_response(401, 'Invalid token');
     }
 }
 

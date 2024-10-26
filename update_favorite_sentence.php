@@ -3,7 +3,7 @@ require 'user/db_config.php';
 require 'user/token.php';
 require 'user/validation.php';
 
-$data = ensure_token_method_argument(['user_id', 'favorite_list_id', 'sentence_id', 'fav']);
+$data = ensure_token_method_argument(['favorite_list_id', 'sentence_id', 'fav']);
 $userId = $data['user_id'];
 $favoriteListId = $data['favorite_list_id'];
 $sentenceId = $data['sentence_id'];

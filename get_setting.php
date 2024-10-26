@@ -3,11 +3,11 @@ require 'user/db_config.php';
 require 'user/token.php';
 require 'user/validation.php';
 
-$data = ensure_token_method_argument(['user_id']);
-$userName = $data['user_id'];
+$data = ensure_token_method_argument();
+$userId = $data['user_id'];
 
 $query = "SELECT * FROM setting WHERE user_id = ?";
-[$stmt, $result] = exec_query($query, "s", $userName);
+[$stmt, $result] = exec_query($query, "i", $userId);
 
 $setting = $result->fetch_assoc();
 $stmt->close();

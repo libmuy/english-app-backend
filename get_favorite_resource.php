@@ -3,8 +3,8 @@ require 'user/db_config.php';
 require 'user/token.php';
 require 'user/validation.php';
 
-$data = ensure_token_method_argument(['user_id']);
-$userName = $data['user_id'];
+$data = ensure_token_method_argument();
+$userId = $data['user_id'];
 // reduces the number of database queries from 3 to 1, 
 // potentially improving performance by minimizing round trips to the database
 $query = "
@@ -27,7 +27,7 @@ WHERE
     fr.user_id = ?
 ";
 
-[$stmt, $result] = exec_query($query, "s", $userName);
+[$stmt, $result] = exec_query($query, "s", $userId);
 
 // Initialize empty arrays for categories, courses, and episodes
 $history = [];

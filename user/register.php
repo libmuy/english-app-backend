@@ -77,29 +77,31 @@ function getUserId($userName)
 
 function genResp($userId, $userName, $email)
 {
-    $jwt = generateToken($userName);
+    $jwt = generateToken($userId);
     echo json_encode(["token" => $jwt, "user_name" => $userName, "user_id" => (int) $userId, "email" => $email]);
 }
 
-$data = ensure_token_method_argument(['user_name', 'password', 'email']);
-$userName = $data['user_name'];
+
+// Main
+$data = ensure_method_argument(['user_name', 'password', 'email']);
+$userId = $data['user_name'];
 $password = $data['password'];
 $email = $data['email'];
 
-if (!validate_user_name($userName) || !validate_password($password) || !validate_email($email)) {
+if (!validate_user_name($userId) || !validate_password($password) || !validate_email($email)) {
     http_response_code(400);
     echo json_encode(['error' => 'Invalid input data']);
     exit;
 }
 
-checkUserExist($userName);
+checkUserExist($userId);
 
 // start a transaction, exit before commit will cause a auto rollback
 $conn->begin_transaction();
-insertUser($userName, $password, $email);
-$userId = getUserId($userName);
+insertUser($userId, $password, $email);
+$userId = getUserId($userId);
 insertDefaultFavoriteList($userId);
 $conn->commit();
 
-genResp($userId, $userName, $email);
+genResp($userId, $userId, $email);
 

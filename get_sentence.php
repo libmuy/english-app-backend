@@ -4,7 +4,7 @@ require 'user/token.php';
 require 'user/validation.php';
 require 'learning_data_common.php';
 
-$data = ensure_token_method_argument(['user_id']);
+$data = ensure_token_method_argument(['type']);
 
 $type = $data['type'];
 $userId = $data['user_id'];

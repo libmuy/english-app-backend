@@ -5,7 +5,7 @@ require_once 'user/validation.php';
 require_once 'vendor/autoload.php';
 
 // Ensure the request method and token, and validate input parameters
-$data = ensure_token_method_argument(['episode_id']); // Assuming proper function name and implementation
+$data = ensure_token_method_argument(['episode_id']);
 $episodeId = $data['episode_id'];
 
 // Validate that episode_id is an integer

@@ -4,7 +4,7 @@ require 'user/token.php';
 require 'user/validation.php';
 require 'learning_data_common.php';
 
-$keys = ['user_id', 'sentence_id', 'review_result'];
+$keys = ['sentence_id', 'review_result'];
 $data = ensure_token_method_argument($keys);
 $userId = $data['user_id'];
 $sentenceId = $data['sentence_id'];

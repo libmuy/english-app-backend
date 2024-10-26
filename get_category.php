@@ -4,7 +4,7 @@ require 'user/token.php';
 require 'user/validation.php';
 
 // category_id == NULL is acceptable.
-ensure_token_method();
+ensure_token_method_argument();
 
 $data = json_decode(file_get_contents('php://input'), true);
 $categoryId = $data['category_id'];

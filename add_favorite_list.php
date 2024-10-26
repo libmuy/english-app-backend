@@ -3,7 +3,7 @@ require 'user/db_config.php';
 require 'user/token.php';
 require 'user/validation.php';
 
-$data = ensure_token_method_argument(['user_id', 'name']);
+$data = ensure_token_method_argument(['name']);
 $userId = $data['user_id'];
 $name = trim($data['name']);
 

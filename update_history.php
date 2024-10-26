@@ -115,7 +115,7 @@ function insertHistory($data, $userId)
 
 }
 
-$data = ensure_token_method_argument(['user_id', 'last_learned', 'last_sentence_id']);
+$data = ensure_token_method_argument(['last_learned', 'last_sentence_id']);
 $userId = $data['user_id'];
 try {
     if (historyExists($data)) {

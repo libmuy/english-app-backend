@@ -3,15 +3,15 @@ require 'user/db_config.php';
 require 'user/token.php';
 require 'user/validation.php';
 
-$data = ensure_token_method_argument(['user_id']);
-$userName = $data['user_id'];
+$data = ensure_token_method_argument();
+$userId = $data['user_id'];
 
 $query = "SELECT course_id, episode_id, favorite_list_id, audio_length_sec, sentence_count, title, last_sentence_id, last_learned
     FROM history 
     WHERE user_id = ? 
     ORDER BY last_learned";
 
-[$stmt, $result] = exec_query($query, "s", $userName);
+[$stmt, $result] = exec_query($query, "i", $userId);
 $history = [];
 while ($row = $result->fetch_assoc()) {
     $history[] = $row;

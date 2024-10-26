@@ -75,7 +75,17 @@ function validateToken() {
     try {
         // Decode the token with the correct key
         $decoded = JWT::decode($authToken, new Key($key, 'HS256'));
-        return (array) $decoded->data;
+        $decodedData = (array) $decoded->data; // Convert the data object to an array
+
+        // Check if 'userId' is in the decoded payload
+        if (!isset($decodedData['userId'])) {
+            http_response_code(401);
+            echo json_encode(['message' => 'Invalid token: missing userId']);
+            exit();
+        }
+
+        // Return the userId
+        return $decodedData['userId'];
     } catch (\Firebase\JWT\ExpiredException $e) {
         http_response_code(401);
         echo json_encode(['message' => 'Token expired']);
@@ -86,4 +96,3 @@ function validateToken() {
         exit();
     }
 }
-?>

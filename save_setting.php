@@ -71,7 +71,7 @@ function validate_data_types($data) {
 // Set the response header to JSON
 header('Content-Type: application/json');
 // Ensure the request method is POST and required parameters are present
-$data = ensure_token_method_argument(['user_id']); // Assuming the function can handle JSON input
+$data = ensure_token_method_argument();
 // Extract the user_id
 $user_id = $data['user_id'];
 unset($data['user_id']);

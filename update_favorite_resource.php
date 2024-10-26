@@ -3,7 +3,7 @@ require 'user/db_config.php';
 require 'user/token.php';
 require 'user/validation.php';
 
-$data = ensure_token_method_argument(['user_id', 'resource_type', 'resource_id', 'fav']);
+$data = ensure_token_method_argument(['resource_type', 'resource_id', 'fav']);
 $userId = $data['user_id'];
 $resourceType = $data['resource_type'];
 $resourceId = $data['resource_id'];

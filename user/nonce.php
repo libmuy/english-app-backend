@@ -2,11 +2,11 @@
 require 'db_config.php';
 require 'validation.php';
 
-$data = ensure_token_method_argument(['user_name'], false);
+$data = ensure_method_argument(['user_name']);
 
-$userName = $data['user_name'];
+$userId = $data['user_name'];
 
-if (!validate_user_name($userName)) {
+if (!validate_user_name($userId)) {
     http_response_code(400);
     echo json_encode(array("error" => "Invalid user ID format"));
     exit;
@@ -16,7 +16,7 @@ if (!validate_user_name($userName)) {
 $nonce = bin2hex(random_bytes(16));
 
 // Prepare the SQL statement
-$updateSql = "UPDATE user SET nonce='$nonce' WHERE name='$userName'";
+$updateSql = "UPDATE user SET nonce='$nonce' WHERE name='$userId'";
 
 // Execute the SQL query
 if ($conn->query($updateSql) === TRUE) {
@@ -34,4 +34,3 @@ if ($conn->query($updateSql) === TRUE) {
     http_response_code(500);
     echo json_encode(array("error" => "Failed to generate nonce"));
 }
-?>

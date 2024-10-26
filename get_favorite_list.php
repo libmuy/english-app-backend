@@ -3,7 +3,7 @@ require 'user/db_config.php';
 require 'user/token.php';
 require 'user/validation.php';
 
-$data = ensure_token_method_argument(['user_id']);
+$data = ensure_token_method_argument();
 $userId = $data['user_id'];
 
 $query = "SELECT * FROM favorite_list_master WHERE user_id = ?";
