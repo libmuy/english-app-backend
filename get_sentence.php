@@ -86,7 +86,7 @@ function getReviewSentences($userId) {
         FROM sentence_master sm
         LEFT JOIN favorite_sentence fs ON fs.sentence_id = sm.id AND fs.user_id = ?
         LEFT JOIN learning_data ld ON ld.sentence_id = sm.id AND ld.user_id = ?
-        WHERE ld.learned_date + ld.interval_days < ?
+        WHERE ld.learned_date + ld.interval_days <= ?
         ORDER BY sm.episode_id, ld.learned_date ASC";
 
     $sentences = querySentences($query, "iii", $userId, $userId, $currentDate);
