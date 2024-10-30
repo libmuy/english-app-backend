@@ -1,6 +1,6 @@
 <?php
-require 'db_config.php';
-require 'validation.php';
+require '../common/db_config.php';
+require '../common/validation.php';
 
 $data = json_decode(file_get_contents('php://input'), true);
 

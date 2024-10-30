@@ -1,7 +1,7 @@
 <?php
-require_once 'user/db_config.php';
+require_once 'common/db_config.php';
 require_once 'user/token.php';
-require_once 'user/validation.php';
+require_once 'common/validation.php';
 require_once 'vendor/autoload.php';
 
 // Ensure the request method and token, and validate input parameters

@@ -1,5 +1,5 @@
 <?php
-require __DIR__ . '/../cors_header.php';
+require __DIR__ . '/cors_header.php';
 
 $host = 'mysql';
 $db = getenv('MYSQL_DATABASE');

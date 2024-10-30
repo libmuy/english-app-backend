@@ -1,8 +1,8 @@
 <?php
-require 'user/db_config.php';
+require 'common/db_config.php';
 require 'user/token.php';
-require 'user/validation.php';
-require 'learning_data_common.php';
+require 'common/validation.php';
+require 'common/learning_data.php';
 
 $data = ensure_token_method_argument();
 $userId = $data['user_id'];

@@ -1,5 +1,5 @@
 <?php
-require 'user/redis_config.php';
+require __DIR__ . '/redis_config.php';
 
 function learning_data_cache_key($userId, $sentenceId)
 {

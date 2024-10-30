@@ -1,6 +1,6 @@
 <?php
-require 'db_config.php';
-require 'validation.php';
+require '../common/db_config.php';
+require '../common/validation.php';
 
 $data = ensure_method_argument(['user_name']);
 

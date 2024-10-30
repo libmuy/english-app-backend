@@ -1,8 +1,8 @@
 <?php
 // Include necessary files
-require 'user/db_config.php';
+require 'common/db_config.php';
 require 'user/token.php';
-require 'user/validation.php';
+require 'common/validation.php';
 
 function historyExists($data)
 {

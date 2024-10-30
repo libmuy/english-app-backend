@@ -1,7 +1,7 @@
 <?php
-require 'user/db_config.php';
+require 'common/db_config.php';
 require 'user/token.php';
-require 'user/validation.php';
+require 'common/validation.php';
 
 
 // Define the allowed columns that can be updated

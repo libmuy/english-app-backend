@@ -1,8 +1,8 @@
 <?php
-require 'db_config.php';
+require '../common/db_config.php';
 require '../vendor/autoload.php';
+require '../common/validation.php';
 require 'token.php';
-require 'validation.php';
 
 $data = ensure_method_argument(['user_name', 'password']);
 

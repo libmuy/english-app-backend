@@ -1,7 +1,7 @@
 <?php
-require 'user/db_config.php';
+require 'common/db_config.php';
 require 'user/token.php';
-require 'user/validation.php';
+require 'common/validation.php';
 
 // category_id == NULL is acceptable.
 ensure_token_method_argument();

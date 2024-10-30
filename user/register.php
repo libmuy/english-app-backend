@@ -1,7 +1,7 @@
 <?php
-require 'db_config.php';
+require '../common/db_config.php';
 require '../vendor/autoload.php';
-require 'validation.php';
+require '../common/validation.php';
 require 'token.php';
 
 
