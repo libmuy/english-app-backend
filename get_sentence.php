@@ -85,7 +85,7 @@ function getReviewSentences($userId) {
         IF(fs.sentence_id IS NOT NULL, 1, 0) AS is_fav, sm.has_description
         FROM sentence_master sm
         LEFT JOIN favorite_sentence fs ON fs.sentence_id = sm.id AND fs.user_id = ?
-        LEFT JOIN learning_data ld ON ld.sentence_id = sm.id AND ld.user_id = ?
+        LEFT JOIN learning_data ld ON ld.sentence_id = sm.id AND ld.user_id = ? AND ld.flags & 2 = 0
         WHERE ld.learned_date + ld.interval_days <= ?
         ORDER BY sm.episode_id, ld.learned_date ASC";
 

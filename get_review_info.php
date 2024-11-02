@@ -12,7 +12,7 @@ $query = "
         SUM(CASE WHEN learned_date + interval_days <= ? THEN 1 ELSE 0 END) as need_to_review_count,
         SUM(CASE WHEN learned_date = ? THEN 1 ELSE 0 END) as today_learned_count
     FROM learning_data
-    WHERE user_id = ?";
+    WHERE user_id = ? AND flags & 2 = 0";
 
 [$stmt, $result] = exec_query($query, "iii", $currentDate, $currentDate, $userId);
 if (!$result) {

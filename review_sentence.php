@@ -23,6 +23,7 @@ if (!$currentData) {
 
 if ($reviewResult == 'skip') {
     $currentData['is_skipped'] = 1;
+    $currentData['learned_date'] = convert2learn_date(new DateTime());
     set_learning_data($currentData);
     exit();
 }

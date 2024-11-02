@@ -1,5 +1,7 @@
 <?php
 require __DIR__ . '/../vendor/autoload.php';
+require '../common/learning_data.php';
+
 
 // function getTuple() {
 //     $value1 = "apple";
@@ -15,6 +17,12 @@ require __DIR__ . '/../vendor/autoload.php';
 // echo $number;  // Outputs: 42
 // echo $flag;    // Outputs: 1 (true)
 
+$curr = new DateTime();
+$interval = convert2learn_date($curr);
+echo "the current date: " . $curr->format('Y-m-d H:i:s') . ", the interval: $interval";
+
+
+exit();
 
 $redis = new Redis();
 $redis->connect("redis", 6379);
