@@ -3,7 +3,7 @@ require 'common/db_config.php';
 require 'common/validation.php';
 require 'user/token.php';
 
-$repo_dir="/var/www/html/english.libmuy.com/app-gh-page/desc";
+$repo_dir="/var/www/html/english.libmuy.com/app-gh-pages/desc";
 $commit_script = __DIR__ . '/update_desc.sh';
 
 // Get input data
