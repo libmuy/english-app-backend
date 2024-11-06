@@ -6,7 +6,7 @@ require 'common/learning_data.php';
 
 $data = ensure_token_method_argument();
 $userId = $data['user_id'];
-$currentDate = convert2learn_date(new DateTime());
+$currentDate = get_learn_date();
 $query = "
     SELECT 
         SUM(CASE WHEN learned_date + interval_days <= ? THEN 1 ELSE 0 END) as need_to_review_count,

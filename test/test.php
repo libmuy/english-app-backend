@@ -18,7 +18,7 @@ require '../common/learning_data.php';
 // echo $flag;    // Outputs: 1 (true)
 
 $curr = new DateTime();
-$interval = convert2learn_date($curr);
+$interval = get_learn_date($curr);
 echo "the current date: " . $curr->format('Y-m-d H:i:s') . ", the interval: $interval";
 
 

@@ -81,15 +81,18 @@ function default_learning_data($userId, $sentenceId) {
         'user_id' => $userId,
         'sentence_id' => $sentenceId,
         'interval_days' => 1,
-        'learned_date' => convert2learn_date(new DateTime()),
+        'learned_date' => get_learn_date(),
         'ease_factor' => 2.5,
         'is_graduated' => false,
         'is_skipped' => false
     ];
 }
 
-function convert2learn_date($date) {
-    $baseDate = new DateTime('2024-01-01');
+
+function get_learn_date($dateStr = "now") {
+    $timezone = new DateTimeZone('Asia/Tokyo');
+    $baseDate = new DateTime('2024-01-01', $timezone);
+    $date = new DateTime($dateStr, $timezone);
     $interval = $baseDate->diff($date);
 
     return $interval->days;

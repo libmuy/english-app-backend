@@ -79,7 +79,7 @@ function getSentencesByEpisode($userId, $episodeId) {
 
 
 function getReviewSentences($userId) {
-    $currentDate = convert2learn_date(new DateTime());
+    $currentDate = get_learn_date();
     $query = "
         SELECT sm.id, sm.episode_id, sm.sentence_idx, sm.start_time, sm.end_time, sm.english, sm.chinese,
         IF(fs.sentence_id IS NOT NULL, 1, 0) AS is_fav, sm.has_description

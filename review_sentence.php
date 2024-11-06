@@ -23,7 +23,7 @@ if (!$currentData) {
 
 if ($reviewResult == 'skip') {
     $currentData['is_skipped'] = 1;
-    $currentData['learned_date'] = convert2learn_date(new DateTime());
+    $currentData['learned_date'] = get_learn_date();
     set_learning_data($currentData);
     exit();
 }
@@ -75,7 +75,7 @@ if (!$isGraduated) {
 $flags = $isGraduated ? 1 : 0;
 
 // Handle late reviews
-$currentDate = convert2learn_date(new DateTime());
+$currentDate = get_learn_date();
 $daysLate = $currentDate - $learnedDate - $intervalDays;
 if ($daysLate > 4) {
     $newIntervalDays = round($intervalDays - $daysLate / 4);
@@ -99,7 +99,7 @@ $intervalDays = max(1, min($intervalDays, $maxIntervalDays));
 // }
 
 $currentData['interval_days'] = $intervalDays;
-$currentData['learned_date'] = convert2learn_date(new DateTime());
+$currentData['learned_date'] = get_learn_date();
 $currentData['ease_factor'] = $easeFactor;
 $currentData['is_graduated'] = $isGraduated;
 
