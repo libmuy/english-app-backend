@@ -87,7 +87,7 @@ function exec_query($query, $paramType="", ...$params)
 {
     global $conn;
     $paramStr = implode(', ', $params);
-    log2file("Query: $query, type: $paramType, params: $paramStr");
+    // log2file("Query: $query, type: $paramType, params: $paramStr");
 
     try {
         // Prepare the statement
