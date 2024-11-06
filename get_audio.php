@@ -23,7 +23,7 @@ if (!$stmt || !$result) {
 }
 
 if ($row = $result->fetch_assoc()) {
-    $filePath = __DIR__ . '/resources/' . trim($row['path']) . '.mp3';
+    $filePath = __DIR__ . '/../app-resource/' . trim($row['path']) . '.mp3';
 } else {
     send_error_response(404, "Episode not found.");
 }
