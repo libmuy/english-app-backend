@@ -24,7 +24,7 @@ function generateToken($userId) {
         "aud" => "libmuy.com", // Audience
         "iat" => time(), // Issued at
         "nbf" => time(), // Not before
-        "exp" => time() + (60 * 60 * 24 * 7), // Expiration: 1 week
+        "exp" => time() + (60 * 60 * 24 * 60), // Expiration: 1 week
         "data" => [
             "userId" => $userId
         ],
