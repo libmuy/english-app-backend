@@ -71,12 +71,12 @@ function validate_data_types($data) {
 // Set the response header to JSON
 header('Content-Type: application/json');
 // Ensure the request method is POST and required parameters are present
-$data = ensure_token_method_argument();
-// Extract the user_id
-$user_id = $data['user_id'];
-unset($data['user_id']);
+ensure_method();
+$user_id = ensure_token();
+$data = ensure_method_argument([]);
 $add = $data['add'] ?? false;
 unset($data['add']);
+log2file($data['playback_times']);
 
 if (empty($data)) {
     send_error_response(400, 'No input data provided.');
