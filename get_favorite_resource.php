@@ -22,7 +22,7 @@ LEFT JOIN
 LEFT JOIN 
     course_master cr ON fr.id = cr.id AND fr.type = 'course'
 LEFT JOIN 
-    episode_master em ON fr.id = em.id AND fr.type = 'episod'
+    episode_master em ON fr.id = em.id AND fr.type = 'episode'
 WHERE 
     fr.user_id = ?
 ";
@@ -32,7 +32,7 @@ WHERE
 // Initialize empty arrays for categories, courses, and episodes
 $history = [];
 $courses = [];
-$favList = [];
+$episodes = [];
 
 while ($row = $result->fetch_assoc()) {
     switch ($row['type']) {
@@ -51,8 +51,8 @@ while ($row = $result->fetch_assoc()) {
                 'episode_count' => $row['sub_count']
             ];
             break;
-        case 'episod':
-            $favList[] = [
+        case 'episode':
+            $episodes[] = [
                 'id' => $row['id'],
                 'name' => $row['name'],
                 'audio_length_sec' => $row['audio_length_sec'],
@@ -69,6 +69,6 @@ header('Content-Type: application/json');
 echo json_encode([
     'category' => $history,
     'course' => $courses,
-    'episode' => $favList
+    'episode' => $episodes
 ]);
 ?>
